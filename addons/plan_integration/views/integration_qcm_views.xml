@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.qcm  –  List View
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_qcm_list" model="ir.ui.view">
+        <field name="name">integration.qcm.list</field>
+        <field name="model">integration.qcm</field>
+        <field name="arch" type="xml">
+            <list string="QCMs">
+                <field name="name"/>
+                <field name="qcm_type" widget="badge"/>
+                <field name="question_count"/>
+                <field name="pass_score"/>
+                <field name="active" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.qcm  –  Form View
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_qcm_form" model="ir.ui.view">
+        <field name="name">integration.qcm.form</field>
+        <field name="model">integration.qcm</field>
+        <field name="arch" type="xml">
+            <form string="QCM">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object"
+                                class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button"
+                                   options="{'terminology': 'archive'}"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Nom du QCM..."/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="qcm_type"/>
+                            <field name="pass_score"
+                                   help="Score minimum sur 10 pour réussir (ex: 6)"/>
+                            <field name="question_count" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="notes" placeholder="Instructions pour ce QCM..."/>
+                        </group>
+                    </group>
+
+                    <!-- Questions -->
+                    <notebook>
+                        <page string="Questions" name="questions">
+                            <field name="question_ids" nolabel="1">
+                                <list>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="question_text"/>
+                                    <field name="max_points"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.qcm.question  –  Form View (standalone, for editing)
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_qcm_question_form" model="ir.ui.view">
+        <field name="name">integration.qcm.question.form</field>
+        <field name="model">integration.qcm.question</field>
+        <field name="arch" type="xml">
+            <form string="Question">
+                <sheet>
+                    <group>
+                        <field name="question_text"
+                               placeholder="Saisissez la question ici..."
+                               nolabel="1"/>
+                        <field name="max_points"/>
+                    </group>
+                    <field name="answer_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="answer_text"/>
+                            <field name="is_correct" widget="boolean_toggle"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.qcm  –  Search View
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_qcm_search" model="ir.ui.view">
+        <field name="name">integration.qcm.search</field>
+        <field name="model">integration.qcm</field>
+        <field name="arch" type="xml">
+            <search string="Recherche QCM">
+                <field name="name"/>
+                <filter string="Test RH" name="filter_rh"
+                        domain="[('qcm_type', '=', 'rh')]"/>
+                <filter string="HSE" name="filter_hse"
+                        domain="[('qcm_type', '=', 'hse')]"/>
+                <filter string="Immersion" name="filter_immersion"
+                        domain="[('qcm_type', '=', 'immersion')]"/>
+                <separator/>
+                <filter string="Archivés" name="inactive"
+                        domain="[('active', '=', False)]"/>
+                <group>
+                    <filter string="Type" name="group_type"
+                            domain="[]" context="{'group_by': 'qcm_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Actions
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="action_integration_qcm" model="ir.actions.act_window">
+        <field name="name">QCMs</field>
+        <field name="res_model">integration.qcm</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_integration_qcm_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer un premier QCM
+            </p>
+            <p>Les QCMs sont utilisés lors des étapes d'évaluation du parcours d'intégration.</p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.plan  –  Form View
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_plan_form" model="ir.ui.view">
+        <field name="name">integration.plan.form</field>
+        <field name="model">integration.plan</field>
+        <field name="arch" type="xml">
+            <form string="Plan d'Intégration">
+                <header>
+                    <!-- Main progression button -->
+                    <button name="action_next_stage"
+                            string="Étape suivante →"
+                            type="object"
+                            class="btn-primary"
+                            invisible="is_terminal"/>
+                    <!-- Reset (for HR corrections) -->
+                    <button name="action_reset_to_nouveau"
+                            string="Réinitialiser"
+                            type="object"
+                            confirm="Réinitialiser ce plan à l'état initial ? Cette action est irréversible."
+                            invisible="state == 'nouveau'"/>
+                    <!-- Statusbar (shared stages for both categories) -->
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="nouveau,culture_valeurs,formation_hse_theorique,modalite_rh,formation_hse_pratique,evaluation_hse,presentation,immersion"/>
+                </header>
+                <sheet>
+                    <!-- Smart buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_qcm_sessions"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-list-alt">
+                            <field name="qcm_session_count"
+                                   widget="statinfo"
+                                   string="Sessions QCM"/>
+                        </button>
+                    </div>
+
+                    <!-- Title -->
+                    <div class="oe_title">
+                        <label for="name" string="Référence"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <!-- Core info -->
+                    <group>
+                        <group string="Employé">
+                            <field name="employee_id"/>
+                            <field name="employee_category"/>
+                            <field name="hire_date"/>
+                            <field name="department_id" readonly="1"/>
+                            <field name="job_position" readonly="1"/>
+                        </group>
+                        <group string="Responsables">
+                            <field name="responsible_hr_id"
+                                   widget="many2one_avatar_user"/>
+                            <field name="manager_id"
+                                   widget="many2one_avatar_user"/>
+                        </group>
+                    </group>
+
+                    <!-- HR Opinion: only shown at decision points -->
+                    <group string="Avis RH (décision de branche)"
+                           invisible="state not in ['culture_valeurs', 'evaluation_hse', 'evaluation_immersion']">
+                        <field name="hr_opinion" nolabel="1"
+                               widget="radio"
+                               invisible="state not in ['culture_valeurs', 'evaluation_hse', 'evaluation_immersion']"/>
+                    </group>
+
+                    <!-- Rapport d'intégration: only for executives at that stage -->
+                    <group string="Rapport d'Intégration"
+                           invisible="state != 'rapport_integration'">
+                        <field name="rapport_integration" nolabel="1"
+                               placeholder="Le candidat rédige ici son rapport d'immersion..."
+                               invisible="state != 'rapport_integration'"/>
+                    </group>
+
+                    <!-- QCM Scores summary -->
+                    <group string="Scores QCM"
+                           invisible="qcm_session_count == 0">
+                        <group>
+                            <field name="score_rh"
+                                   invisible="employee_category == 'executive'"/>
+                            <field name="score_hse"/>
+                        </group>
+                        <group>
+                            <field name="score_immersion"
+                                   invisible="employee_category == 'executive'"/>
+                        </group>
+                    </group>
+
+                    <!-- Tabs -->
+                    <notebook>
+                        <page string="Sessions QCM" name="qcm_sessions">
+                            <field name="qcm_session_ids" nolabel="1" mode="list"
+                                   context="{'default_plan_id': id}">
+                                <list string="Sessions QCM"
+                                      decoration-success="passed == True and state == 'done'"
+                                      decoration-danger="passed == False and state == 'done'"
+                                      decoration-muted="state == 'draft'">
+                                    <field name="qcm_id"/>
+                                    <field name="qcm_type" widget="badge"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'done'"
+                                           decoration-warning="state == 'in_progress'"
+                                           decoration-info="state == 'draft'"/>
+                                    <field name="date_start" optional="show"/>
+                                    <field name="date_end" optional="show"/>
+                                    <field name="score"/>
+                                    <field name="passed" widget="boolean"/>
+                                    <button name="action_start"
+                                            string="Démarrer"
+                                            type="object"
+                                            icon="fa-play"
+                                            invisible="state != 'draft'"/>
+                                    <button name="action_submit"
+                                            string="Soumettre"
+                                            type="object"
+                                            icon="fa-check"
+                                            invisible="state != 'in_progress'"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Notes RH" name="notes">
+                            <field name="notes"
+                                   placeholder="Notes internes RH (non visibles par le candidat)..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.plan  –  List View
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_plan_list" model="ir.ui.view">
+        <field name="name">integration.plan.list</field>
+        <field name="model">integration.plan</field>
+        <field name="arch" type="xml">
+            <list string="Plans d'Intégration"
+                  decoration-success="state == 'valide'"
+                  decoration-danger="state == 'periode_essai_non_concluante'"
+                  decoration-warning="state in ('plan_formation', 'transfert_autre_poste')"
+                  decoration-muted="state == 'nouveau'">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="employee_category" widget="badge"/>
+                <field name="hire_date"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'valide'"
+                       decoration-danger="state == 'periode_essai_non_concluante'"
+                       decoration-warning="state in ('plan_formation', 'transfert_autre_poste')"
+                       decoration-info="state not in ('valide', 'periode_essai_non_concluante', 'plan_formation', 'transfert_autre_poste', 'nouveau')"/>
+                <field name="responsible_hr_id" widget="many2one_avatar_user"
+                       optional="show"/>
+                <field name="manager_id" widget="many2one_avatar_user"
+                       optional="show"/>
+                <field name="score_rh" optional="hide"/>
+                <field name="score_hse" optional="show"/>
+                <field name="score_immersion" optional="hide"/>
+                <field name="qcm_session_count" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.plan  –  Kanban View
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_plan_kanban" model="ir.ui.view">
+        <field name="name">integration.plan.kanban</field>
+        <field name="model">integration.plan</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" quick_create="false"
+                    group_create="false">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="employee_category"/>
+                <field name="state"/>
+                <field name="score_rh"/>
+                <field name="score_hse"/>
+                <field name="score_immersion"/>
+                <field name="responsible_hr_id"/>
+                <field name="hire_date"/>
+                <field name="is_terminal"/>
+                <templates>
+                    <t t-name="card">
+                        <!-- Employee name -->
+                        <field name="employee_id" class="fw-bold fs-5"/>
+                        <!-- Category badge -->
+                        <div class="mt-1 mb-2">
+                            <field name="employee_category"
+                                   class="badge rounded-pill text-bg-secondary"/>
+                        </div>
+                        <!-- Scores (shown only if > 0) -->
+                        <t t-if="record.score_rh.value">
+                            <div class="text-muted small">
+                                RH: <b><field name="score_rh"/></b>/10
+                            </div>
+                        </t>
+                        <t t-if="record.score_hse.value">
+                            <div class="text-muted small">
+                                HSE: <b><field name="score_hse"/></b>/10
+                            </div>
+                        </t>
+                        <t t-if="record.score_immersion.value">
+                            <div class="text-muted small">
+                                Immersion: <b><field name="score_immersion"/></b>/10
+                            </div>
+                        </t>
+                        <!-- Footer: date + HR avatar -->
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted">
+                                <field name="hire_date"/>
+                            </small>
+                            <field name="responsible_hr_id"
+                                   widget="many2one_avatar_user"/>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.plan  –  Search View
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_plan_search" model="ir.ui.view">
+        <field name="name">integration.plan.search</field>
+        <field name="model">integration.plan</field>
+        <field name="arch" type="xml">
+            <search string="Recherche Plans d'Intégration">
+                <field name="name" string="Référence"/>
+                <field name="employee_id"/>
+                <field name="responsible_hr_id"/>
+                <field name="manager_id"/>
+                <!-- Quick filters -->
+                <filter string="Mes plans (RH)" name="my_plans"
+                        domain="[('responsible_hr_id', '=', uid)]"/>
+                <filter string="En cours" name="in_progress"
+                        domain="[('is_terminal', '=', False), ('state', '!=', 'nouveau')]"/>
+                <filter string="Validés" name="valide"
+                        domain="[('state', '=', 'valide')]"/>
+                <filter string="Non conclusifs" name="nc"
+                        domain="[('state', '=', 'periode_essai_non_concluante')]"/>
+                <separator/>
+                <filter string="Opérateurs" name="operators"
+                        domain="[('employee_category', '=', 'operator')]"/>
+                <filter string="Cadres" name="executives"
+                        domain="[('employee_category', '=', 'executive')]"/>
+                <!-- Group by -->
+                <group>
+                    <filter string="Étape" name="group_state"
+                            domain="[]" context="{'group_by': 'state'}"/>
+                    <filter string="Catégorie" name="group_category"
+                            domain="[]" context="{'group_by': 'employee_category'}"/>
+                    <filter string="Responsable RH" name="group_hr"
+                            domain="[]" context="{'group_by': 'responsible_hr_id'}"/>
+                    <filter string="Manager" name="group_manager"
+                            domain="[]" context="{'group_by': 'manager_id'}"/>
+                    <filter string="Département" name="group_dept"
+                            domain="[]" context="{'group_by': 'department_id'}"/>
+                    <filter string="Mois d'embauche" name="group_hire"
+                            domain="[]" context="{'group_by': 'hire_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Actions
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="action_integration_plan" model="ir.actions.act_window">
+        <field name="name">Plans d'Intégration</field>
+        <field name="res_model">integration.plan</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_integration_plan_search"/>
+        <field name="context">{'search_default_in_progress': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer le premier plan d'intégration
+            </p>
+            <p>Chaque nouveau recru possède son propre plan de parcours d'intégration.</p>
+        </field>
+    </record>
+
+    <!-- Action: My Integration Plan (for new hires) -->
+    <record id="action_my_integration_plan" model="ir.actions.act_window">
+        <field name="name">Mon Plan d'Intégration</field>
+        <field name="res_model">integration.plan</field>
+        <field name="view_mode">form,list</field>
+        <field name="domain">[('employee_id.user_id', '=', uid)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucun plan d'intégration ne vous est assigné.
+            </p>
+            <p>Contactez votre responsable RH.</p>
+        </field>
+    </record>
+
+</odoo>

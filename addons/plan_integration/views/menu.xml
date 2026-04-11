@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Main Application Menu
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <menuitem id="menu_plan_integration_root"
+              name="Plan d'Intégration"
+              sequence="50"
+              web_icon="plan_integration,static/description/icon.png"/>
+
+    <!-- ── HR / Manager main section ──────────────────────────────────────── -->
+    <menuitem id="menu_plan_integration_main"
+              name="Suivi"
+              parent="menu_plan_integration_root"
+              sequence="10"/>
+
+    <menuitem id="menu_integration_plan_all"
+              name="Tous les Plans"
+              parent="menu_plan_integration_main"
+              action="action_integration_plan"
+              sequence="10"
+              groups="plan_integration.group_plan_integration_hr,plan_integration.group_plan_integration_manager"/>
+
+    <menuitem id="menu_integration_qcm_sessions_all"
+              name="Toutes les Sessions QCM"
+              parent="menu_plan_integration_main"
+              action="action_integration_qcm_session"
+              sequence="20"
+              groups="plan_integration.group_plan_integration_hr,plan_integration.group_plan_integration_manager"/>
+
+    <!-- ── New hire section ───────────────────────────────────────────────── -->
+    <menuitem id="menu_plan_integration_new_hire"
+              name="Mon Parcours"
+              parent="menu_plan_integration_root"
+              sequence="20"/>
+
+    <menuitem id="menu_my_integration_plan"
+              name="Mon Plan d'Intégration"
+              parent="menu_plan_integration_new_hire"
+              action="action_my_integration_plan"
+              sequence="10"
+              groups="plan_integration.group_plan_integration_new_hire"/>
+
+    <menuitem id="menu_my_qcm_sessions"
+              name="Mes QCMs"
+              parent="menu_plan_integration_new_hire"
+              action="action_my_qcm_sessions"
+              sequence="20"
+              groups="plan_integration.group_plan_integration_new_hire"/>
+
+    <!-- ── Configuration (HR only) ───────────────────────────────────────── -->
+    <menuitem id="menu_plan_integration_config"
+              name="Configuration"
+              parent="menu_plan_integration_root"
+              sequence="90"
+              groups="plan_integration.group_plan_integration_hr"/>
+
+    <menuitem id="menu_integration_qcm"
+              name="Gestion des QCMs"
+              parent="menu_plan_integration_config"
+              action="action_integration_qcm"
+              sequence="10"
+              groups="plan_integration.group_plan_integration_hr"/>
+
+</odoo>

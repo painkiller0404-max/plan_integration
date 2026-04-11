@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.qcm.session  –  Form View (QCM taking – tablet friendly)
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_qcm_session_form" model="ir.ui.view">
+        <field name="name">integration.qcm.session.form</field>
+        <field name="model">integration.qcm.session</field>
+        <field name="arch" type="xml">
+            <form string="Session QCM">
+                <header>
+                    <!-- Start button: shown only in draft -->
+                    <button name="action_start"
+                            string="▶  Démarrer le QCM"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <!-- Submit button: shown only when in progress -->
+                    <button name="action_submit"
+                            string="✔  Soumettre mes réponses"
+                            type="object"
+                            class="btn-success"
+                            confirm="Êtes-vous sûr de vouloir soumettre ? Vous ne pourrez plus modifier vos réponses."
+                            invisible="state != 'in_progress'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,in_progress,done"/>
+                </header>
+                <sheet>
+                    <!-- Score board (visible only after completion) -->
+                    <div class="alert alert-success text-center" role="alert"
+                         invisible="state != 'done' or not passed">
+                        <h3>✅ QCM réussi !  Score : <field name="score" readonly="1"/> / 10</h3>
+                    </div>
+                    <div class="alert alert-danger text-center" role="alert"
+                         invisible="state != 'done' or passed">
+                        <h3>❌ QCM non réussi.  Score : <field name="score" readonly="1"/> / 10</h3>
+                        <p>Score requis : <field name="pass_score" readonly="1"/> / 10</p>
+                    </div>
+
+                    <!-- Session meta -->
+                    <group>
+                        <group>
+                            <field name="plan_id" readonly="1"/>
+                            <field name="qcm_id" readonly="state != 'draft'"/>
+                            <field name="qcm_type" readonly="1" widget="badge"/>
+                        </group>
+                        <group>
+                            <field name="user_id" readonly="1"
+                                   widget="many2one_avatar_user"/>
+                            <field name="date_start" readonly="1"
+                                   invisible="not date_start"/>
+                            <field name="date_end" readonly="1"
+                                   invisible="not date_end"/>
+                        </group>
+                    </group>
+
+                    <!-- Score summary (only when done) -->
+                    <group string="Résultats" invisible="state != 'done'">
+                        <group>
+                            <field name="points_earned" readonly="1"/>
+                            <field name="points_total" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="score" readonly="1"/>
+                            <field name="passed" readonly="1" widget="boolean"/>
+                        </group>
+                    </group>
+
+                    <!-- Questions & Answers -->
+                    <notebook>
+                        <page string="Questions" name="questions">
+                            <field name="response_ids" nolabel="1"
+                                   readonly="state == 'done'">
+                                <list string="Réponses" editable="bottom"
+                                      decoration-success="is_correct == True"
+                                      decoration-danger="not is_correct and points_earned == 0">
+                                    <field name="question_text" readonly="1" string="Question"/>
+                                    <field name="selected_answer_id"
+                                           string="Votre réponse"
+                                           widget="many2one"
+                                           options="{'no_open': True, 'no_create': True}"
+                                           readonly="parent.state == 'done'"/>
+                                    <field name="is_correct" readonly="1"
+                                           widget="boolean"
+                                           string="✓"
+                                           optional="show"/>
+                                    <field name="points_earned" readonly="1"
+                                           string="Pts"
+                                           optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.qcm.session  –  List View
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_qcm_session_list" model="ir.ui.view">
+        <field name="name">integration.qcm.session.list</field>
+        <field name="model">integration.qcm.session</field>
+        <field name="arch" type="xml">
+            <list string="Sessions QCM"
+                  decoration-success="passed == True and state == 'done'"
+                  decoration-danger="passed == False and state == 'done'"
+                  decoration-muted="state == 'draft'">
+                <field name="name"/>
+                <field name="plan_id"/>
+                <field name="qcm_id"/>
+                <field name="qcm_type" widget="badge"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-warning="state == 'in_progress'"
+                       decoration-info="state == 'draft'"/>
+                <field name="date_start" optional="show"/>
+                <field name="score"/>
+                <field name="passed" widget="boolean" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.qcm.session  –  Search View
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_qcm_session_search" model="ir.ui.view">
+        <field name="name">integration.qcm.session.search</field>
+        <field name="model">integration.qcm.session</field>
+        <field name="arch" type="xml">
+            <search string="Recherche Sessions">
+                <field name="plan_id"/>
+                <field name="qcm_id"/>
+                <filter string="En cours" name="in_progress"
+                        domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Terminées" name="done"
+                        domain="[('state', '=', 'done')]"/>
+                <filter string="Réussies" name="passed"
+                        domain="[('passed', '=', True)]"/>
+                <filter string="Non réussies" name="failed"
+                        domain="[('passed', '=', False), ('state', '=', 'done')]"/>
+                <group>
+                    <filter string="Plan" name="group_plan"
+                            domain="[]" context="{'group_by': 'plan_id'}"/>
+                    <filter string="Type QCM" name="group_type"
+                            domain="[]" context="{'group_by': 'qcm_type'}"/>
+                    <filter string="État" name="group_state"
+                            domain="[]" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Actions
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="action_integration_qcm_session" model="ir.actions.act_window">
+        <field name="name">Sessions QCM</field>
+        <field name="res_model">integration.qcm.session</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_integration_qcm_session_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune session QCM pour le moment
+            </p>
+        </field>
+    </record>
+
+    <!-- Action: My QCM Sessions (for new hires, filtered to current user) -->
+    <record id="action_my_qcm_sessions" model="ir.actions.act_window">
+        <field name="name">Mes QCMs</field>
+        <field name="res_model">integration.qcm.session</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('user_id', '=', uid)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucun QCM à compléter pour le moment
+            </p>
+        </field>
+    </record>
+
+</odoo>

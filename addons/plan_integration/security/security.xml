@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Group: Responsable RH (full access, manages all plans) -->
+        <record id="group_plan_integration_hr" model="res.groups">
+            <field name="name">Responsable RH / Plan d'Intégration</field>
+            <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+
+        <!-- Group: Manager (evaluates immersion, views assigned plans) -->
+        <record id="group_plan_integration_manager" model="res.groups">
+            <field name="name">Manager / Plan d'Intégration</field>
+        </record>
+
+        <!-- Group: Nouveau Recru (takes QCMs, views own plan only) -->
+        <record id="group_plan_integration_new_hire" model="res.groups">
+            <field name="name">Nouveau Recru / Plan d'Intégration</field>
+        </record>
+    </data>
+</odoo>
+
+
