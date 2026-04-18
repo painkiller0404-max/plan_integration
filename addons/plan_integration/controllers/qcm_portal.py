@@ -14,6 +14,13 @@ from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
+# Mirrors the model constant — which stage creates which QCM type
+STAGE_QCM_MAP = {
+    'culture_valeurs':      'rh',
+    'evaluation_hse':       'hse',
+    'evaluation_immersion': 'immersion',
+}
+
 
 class QcmKioskController(http.Controller):
 
@@ -34,14 +41,19 @@ class QcmKioskController(http.Controller):
             order='hire_date desc, name'
         )
         selected_plan = None
-        draft_sessions = env['integration.qcm.session']
+        draft_sessions = request.env['integration.qcm.session'].sudo().browse()
         if plan_id:
             try:
                 selected_plan = env['integration.plan'].browse(int(plan_id))
                 if selected_plan.exists():
-                    draft_sessions = selected_plan.qcm_session_ids.filtered(
-                        lambda s: s.state == 'draft'
-                    )
+                    # Only show the session(s) for the CURRENT stage
+                    expected_type = STAGE_QCM_MAP.get(selected_plan.state)
+                    if expected_type:
+                        draft_sessions = selected_plan.qcm_session_ids.filtered(
+                            lambda s: s.state == 'draft'
+                            and s.qcm_type == expected_type
+                        )
+                    # If the plan is not at a QCM stage, draft_sessions stays empty
             except (ValueError, TypeError):
                 pass
 

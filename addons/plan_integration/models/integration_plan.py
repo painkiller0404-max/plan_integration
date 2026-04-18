@@ -23,6 +23,13 @@ STATE_SELECTION = [
 
 TERMINAL_STATES = {'valide', 'plan_formation', 'periode_essai_non_concluante', 'transfert_autre_poste'}
 
+# Maps plan stages that require a QCM to the corresponding qcm_type
+STAGE_QCM_MAP = {
+    'culture_valeurs':      'rh',
+    'evaluation_hse':       'hse',
+    'evaluation_immersion': 'immersion',
+}
+
 # Ordered stages per category (decision gates handled separately)
 OPERATOR_FLOW = [
     'nouveau', 'culture_valeurs', 'formation_hse_theorique', 'modalite_rh',
@@ -171,6 +178,19 @@ class IntegrationPlan(models.Model):
                 )
         return super().create(vals_list)
 
+    def write(self, vals):
+        """Auto-create / reset QCM sessions when plan enters a QCM stage."""
+        old_states = {rec.id: rec.state for rec in self} if 'state' in vals else {}
+        result = super().write(vals)
+        if 'state' in vals:
+            new_state = vals['state']
+            qcm_type = STAGE_QCM_MAP.get(new_state)
+            if qcm_type:
+                for rec in self:
+                    if old_states.get(rec.id) != new_state:
+                        rec._auto_create_or_reset_qcm_session(qcm_type)
+        return result
+
     # ─────────────────────────────────────────────────────────────────────────
     # State machine actions
     # ─────────────────────────────────────────────────────────────────────────
@@ -205,8 +225,40 @@ class IntegrationPlan(models.Model):
         }
 
     # ─────────────────────────────────────────────────────────────────────────
-    # Internal state machine helpers
+    # QCM auto-management
     # ─────────────────────────────────────────────────────────────────────────
+
+    def _auto_create_or_reset_qcm_session(self, qcm_type):
+        """
+        Ensure one draft session exists for the given qcm_type.
+        - First time entering the stage  → create a fresh session.
+        - Retry (existing session found) → reset it to draft, clear responses.
+        """
+        qcm = self.env['integration.qcm'].search(
+            [('qcm_type', '=', qcm_type)], limit=1
+        )
+        if not qcm:
+            return  # No QCM configured for this type — skip silently
+
+        existing = self.qcm_session_ids.filtered(
+            lambda s: s.qcm_type == qcm_type
+        )
+        if not existing:
+            # First attempt: create a brand new session
+            self.env['integration.qcm.session'].create({
+                'plan_id': self.id,
+                'qcm_id':  qcm.id,
+            })
+        else:
+            # Retry: reset the most recent session (clear answers, back to draft)
+            session = existing.sorted('id', reverse=True)[0]
+            session.response_ids.unlink()         # Delete previous answers
+            session.action_generate_token()       # Fresh secure token
+            session.write({
+                'state':      'draft',
+                'date_start': False,
+                'date_end':   False,
+            })
 
     def _advance_state(self):
         """Core state machine dispatcher."""

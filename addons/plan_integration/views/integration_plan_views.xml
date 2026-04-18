@@ -100,6 +100,7 @@
                             <field name="qcm_session_ids" nolabel="1" mode="list"
                                    context="{'default_plan_id': id}">
                                 <list string="Sessions QCM"
+                                      create="0" delete="0"
                                       decoration-success="passed == True and state == 'done'"
                                       decoration-danger="passed == False and state == 'done'"
                                       decoration-muted="state == 'draft'">
