@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SHARED LAYOUT  —  no Odoo chrome, tablet-optimised
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template id="qcm_portal_layout" name="QCM Portal Base Layout">
+        <html lang="fr">
+        <head>
+            <meta charset="utf-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <meta name="robots" content="noindex, nofollow"/>
+            <title>QCM — Plan d'Intégration</title>
+            <style>
+                *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+                html, body { min-height: 100vh; }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                                 Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    font-size: 18px; background: #f0f2f5; color: #2d3748;
+                }
+                .qh {
+                    background: linear-gradient(135deg, #714B67 0%, #4a1942 100%);
+                    color: white; padding: 18px 28px;
+                    display: flex; align-items: center; gap: 14px;
+                    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+                }
+                .qh-icon {
+                    width: 40px; height: 40px; background: rgba(255,255,255,0.2);
+                    border-radius: 10px; display: flex; align-items: center;
+                    justify-content: center; font-size: 20px;
+                }
+                .qh h1 { font-size: 1.15rem; font-weight: 600; }
+                .qh p  { font-size: 0.8rem; opacity: 0.75; margin-top: 2px; }
+                .qh-badge {
+                    margin-left: auto; background: rgba(255,255,255,0.18);
+                    border-radius: 20px; padding: 4px 14px; font-size: 0.78rem;
+                }
+                .qc { max-width: 800px; margin: 28px auto; padding: 0 16px 60px; }
+                .card {
+                    background: white; border-radius: 14px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+                    overflow: hidden; margin-bottom: 18px;
+                }
+                .card-head {
+                    background: #f8f5f9; padding: 16px 22px;
+                    border-bottom: 1px solid #e8dded;
+                    display: flex; align-items: center; gap: 10px;
+                }
+                .card-head h2 { font-size: 1.05rem; font-weight: 600; color: #714B67; }
+                .alert {
+                    border-radius: 10px; padding: 13px 18px;
+                    margin-bottom: 16px; font-size: 0.93rem;
+                    display: flex; align-items: flex-start; gap: 10px;
+                }
+                .alert-info    { background: #e8f4fd; border-left: 4px solid #3498db; color: #1a5276; }
+                .alert-warning { background: #fef9e7; border-left: 4px solid #f39c12; color: #7d6608; }
+                .form-row { padding: 18px 22px; border-bottom: 1px solid #f0ebf4; }
+                .form-row:last-child { border-bottom: none; }
+                .form-row label { display: block; font-weight: 600; font-size: 0.92rem; margin-bottom: 8px; color: #4a4a5a; }
+                .form-select {
+                    width: 100%; padding: 13px 16px; font-size: 1rem;
+                    border: 2px solid #d0c4d9; border-radius: 10px;
+                    appearance: none; background: white;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23714B67' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+                    background-repeat: no-repeat; background-position: right 14px center;
+                    transition: border-color 0.15s;
+                }
+                .form-select:focus { outline: none; border-color: #714B67; }
+                .btn-primary {
+                    background: linear-gradient(135deg, #714B67, #9b59b6);
+                    color: white; border: none; border-radius: 12px;
+                    padding: 16px 40px; font-size: 1.05rem; font-weight: 700;
+                    cursor: pointer; width: 100%; touch-action: manipulation;
+                    box-shadow: 0 4px 14px rgba(113,75,103,0.35); transition: all 0.2s;
+                }
+                .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(113,75,103,0.45); }
+                .btn-submit {
+                    background: linear-gradient(135deg, #27ae60, #2ecc71);
+                    color: white; border: none; border-radius: 12px;
+                    padding: 16px 40px; font-size: 1.05rem; font-weight: 700;
+                    cursor: pointer; width: 100%; max-width: 380px;
+                    box-shadow: 0 4px 14px rgba(39,174,96,0.35);
+                    touch-action: manipulation; transition: all 0.2s;
+                }
+                .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(39,174,96,0.45); }
+                .btn-submit:disabled { background: #bdc3c7; box-shadow: none; cursor: not-allowed; transform: none; }
+                .btn-area { text-align: center; padding: 20px 22px; }
+                .q-row { padding: 20px 22px; border-bottom: 1px solid #f0ebf4; }
+                .q-row:last-child { border-bottom: none; }
+                .q-num {
+                    display: inline-flex; align-items: center; justify-content: center;
+                    width: 26px; height: 26px; background: #714B67; color: white;
+                    border-radius: 50%; font-size: 0.78rem; font-weight: 700;
+                    margin-right: 10px; flex-shrink: 0; vertical-align: middle;
+                }
+                .q-text { font-size: 1.02rem; font-weight: 500; margin-bottom: 14px; line-height: 1.5; }
+                .q-answers { display: flex; flex-direction: column; gap: 9px; padding-left: 36px; }
+                .q-opt {
+                    display: flex; align-items: center; gap: 13px;
+                    padding: 13px 16px; border: 2px solid #e4d9ec; border-radius: 10px;
+                    cursor: pointer; font-size: 0.98rem; transition: all 0.15s;
+                    user-select: none; -webkit-tap-highlight-color: transparent;
+                }
+                .q-opt:hover { border-color: #714B67; background: #f8f3f9; }
+                .q-opt input[type="radio"] { width: 20px; height: 20px; accent-color: #714B67; flex-shrink: 0; }
+                .q-opt:has(input:checked) { border-color: #714B67; background: #f0e8f0; font-weight: 500; }
+                .progress { background: white; border-radius: 12px; padding: 14px 22px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+                .progress-label { display: flex; justify-content: space-between; font-size: 0.83rem; color: #718096; margin-bottom: 7px; }
+                .progress-bg { height: 7px; background: #e4d9ec; border-radius: 4px; overflow: hidden; }
+                .progress-fill { height: 100%; background: linear-gradient(90deg, #714B67, #9b59b6); border-radius: 4px; transition: width 0.3s; }
+                .done-card { text-align: center; padding: 54px 36px; }
+                .done-icon { font-size: 72px; display: block; margin-bottom: 18px; }
+                .done-card h2 { font-size: 1.7rem; font-weight: 700; margin-bottom: 10px; }
+                .done-card p  { font-size: 1rem; color: #718096; margin-bottom: 26px; }
+                .btn-new {
+                    background: #714B67; color: white; border: none; border-radius: 10px;
+                    padding: 13px 32px; font-size: 0.95rem; font-weight: 600;
+                    cursor: pointer; text-decoration: none; display: inline-block;
+                }
+                .empty-msg { padding: 28px 22px; text-align: center; color: #718096; }
+                .foot { text-align: center; padding: 18px; font-size: 0.73rem; color: #a0aec0; }
+                @media (max-width: 600px) {
+                    .qc { margin: 12px auto; padding: 0 10px 40px; }
+                    .q-answers { padding-left: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <header class="qh">
+                <div class="qh-icon">📋</div>
+                <div>
+                    <h1>Plan d'Intégration</h1>
+                    <p>Interface Tablette</p>
+                </div>
+                <span class="qh-badge">Mode Kiosque</span>
+            </header>
+            <div class="qc">
+                <t t-out="0"/>
+            </div>
+            <footer class="foot">Plan d'Intégration ©GDS </footer>
+        </body>
+        </html>
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         KIOSK SELECTION  —  HR selects plan → sees its draft sessions (auth=user)
+         Step 1: pick the integration plan (auto-reload on change)
+         Step 2: pick which draft session to start
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template id="qcm_kiosk_select" name="QCM Kiosk — Sélection HR">
+        <t t-call="plan_integration.qcm_portal_layout">
+
+            <t t-if="error">
+                <div class="alert alert-warning">
+                    <span>⚠️</span>
+                    <div>
+                        <t t-if="error == 'missing_session'">Veuillez sélectionner un test à démarrer.</t>
+                        <t t-elif="error == 'already_started'">Ce test a déjà été démarré ou terminé.</t>
+                        <t t-elif="error == 'no_questions'">Ce QCM ne contient aucune question. Configurez-le d'abord.</t>
+                        <t t-elif="error == 'notfound'">Session introuvable.</t>
+                        <t t-else="">Une erreur est survenue. Veuillez réessayer.</t>
+                    </div>
+                </div>
+            </t>
+
+            <div class="alert alert-info">
+                <span>ℹ️</span>
+                <div>
+                    <strong>Mode Responsable :</strong>
+                    Sélectionnez l'employé, choisissez le test planifié à faire passer,
+                    puis cliquez <strong>Démarrer</strong> et remettez la tablette à l'employé.
+                </div>
+            </div>
+
+            <!-- STEP 1 — choose the integration plan (searchable dropdown) -->
+            <div class="card" style="overflow:visible">
+                <div class="card-head" style="border-radius: 14px 14px 0 0; overflow:hidden">
+                    <span style="font-size:1.2rem">👤</span>
+                    <h2>Étape 1 — Choisir l'employé</h2>
+                </div>
+                <form method="get" action="/qcm/kiosk" id="plan-form">
+                    <!-- Hidden real input submitted to server -->
+                    <input type="hidden" name="plan_id" id="plan_id_val"
+                           t-att-value="selected_plan and selected_plan.id or ''"/>
+                    <div class="form-row">
+                        <label for="plan_search">Plan d'Intégration</label>
+
+                        <!-- Custom searchable dropdown -->
+                        <div class="sd-wrap" id="sd-wrap">
+                            <div class="sd-display" id="sd-display" tabindex="0">
+                                <span class="sd-text" id="sd-text">
+                                    <t t-if="selected_plan">
+                                        <t t-esc="selected_plan.employee_id.name"/>
+                                        (<t t-esc="selected_plan.name"/>)
+                                    </t>
+                                    <t t-else="">-- Sélectionner un plan --</t>
+                                </span>
+                                <span class="sd-arrow">▾</span>
+                            </div>
+                            <div class="sd-dropdown" id="sd-dropdown" style="display:none">
+                                <div class="sd-search-wrap">
+                                    <input type="text" class="sd-search" id="sd-search"
+                                           placeholder="Rechercher par nom ou référence…"
+                                           autocomplete="off"/>
+                                </div>
+                                <div class="sd-list" id="sd-list">
+                                    <div class="sd-item" data-value="" data-label="-- Sélectionner un plan --">
+                                        -- Sélectionner un plan --
+                                    </div>
+                                    <t t-foreach="plans" t-as="p">
+                                        <div class="sd-item"
+                                             t-att-data-value="p.id"
+                                             t-attf-data-label="#{p.employee_id.name} #{p.name}">
+                                            <strong t-esc="p.employee_id.name"/>
+                                            <span style="color:#9b8faa;font-size:0.85em;margin-left:6px;"
+                                                  t-esc="p.name"/>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <style>
+                .sd-wrap { position: relative; user-select: none; }
+                .sd-display {
+                    width: 100%; padding: 13px 16px; font-size: 1rem;
+                    border: 2px solid #d0c4d9; border-radius: 10px;
+                    background: white; cursor: pointer;
+                    display: flex; align-items: center; justify-content: space-between;
+                    transition: border-color 0.15s;
+                }
+                .sd-display:focus, .sd-display.open { border-color: #714B67; outline: none; }
+                .sd-arrow { color: #714B67; font-size: 0.9rem; flex-shrink: 0; margin-left: 8px; transition: transform 0.2s; }
+                .sd-display.open .sd-arrow { transform: rotate(180deg); }
+                .sd-dropdown {
+                    position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+                    background: white; border: 2px solid #714B67; border-radius: 10px;
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 9999; overflow: visible;
+                }
+                .sd-search-wrap { padding: 10px 12px; border-bottom: 1px solid #e8dded; background: #faf7fc; border-radius: 8px 8px 0 0; }
+                .sd-search {
+                    width: 100%; padding: 10px 14px; font-size: 1rem;
+                    border: 2px solid #d0c4d9; border-radius: 8px;
+                    outline: none; transition: border-color 0.15s;
+                }
+                .sd-search:focus { border-color: #714B67; }
+                .sd-list { max-height: 260px; overflow-y: auto; }
+                .sd-item {
+                    padding: 12px 16px; cursor: pointer; font-size: 0.97rem;
+                    transition: background 0.1s; border-bottom: 1px solid #f5f0f7;
+                }
+                .sd-item:last-child { border-bottom: none; }
+                .sd-item:hover { background: #f5eef9; }
+                .sd-item.selected { background: #ede1f2; font-weight: 600; }
+                .sd-item.hidden { display: none; }
+            </style>
+
+            <script>
+            (function(){
+                var wrap    = document.getElementById('sd-wrap');
+                var display = document.getElementById('sd-display');
+                var dropdown= document.getElementById('sd-dropdown');
+                var search  = document.getElementById('sd-search');
+                var list    = document.getElementById('sd-list');
+                var valInput= document.getElementById('plan_id_val');
+                var textEl  = document.getElementById('sd-text');
+                var form    = document.getElementById('plan-form');
+                var items   = list.querySelectorAll('.sd-item');
+
+                function open() {
+                    dropdown.style.display = 'block';
+                    display.classList.add('open');
+                    search.value = '';
+                    filterItems('');
+                    search.focus();
+                }
+                function close() {
+                    dropdown.style.display = 'none';
+                    display.classList.remove('open');
+                }
+                function filterItems(q) {
+                    q = q.toLowerCase();
+                    items.forEach(function(it) {
+                        var label = (it.getAttribute('data-label') || it.textContent).toLowerCase();
+                        it.classList.toggle('hidden', q.length > 0 &amp;&amp; label.indexOf(q) === -1);
+                    });
+                }
+                function select(item) {
+                    var val   = item.getAttribute('data-value') || '';
+                    var label = item.getAttribute('data-label') || item.textContent.trim();
+                    valInput.value = val;
+                    textEl.textContent = label;
+                    items.forEach(function(i){ i.classList.remove('selected'); });
+                    item.classList.add('selected');
+                    close();
+                    if (val) { form.submit(); }
+                }
+
+                display.addEventListener('click', function(){ dropdown.style.display === 'none' ? open() : close(); });
+                display.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); }});
+                search.addEventListener('input', function(){ filterItems(this.value); });
+                items.forEach(function(item){
+                    item.addEventListener('click', function(){ select(item); });
+                });
+                document.addEventListener('click', function(e){
+                    if (!wrap.contains(e.target)) close();
+                });
+
+                // Mark pre-selected item
+                var currentVal = valInput.value;
+                if (currentVal) {
+                    items.forEach(function(it){
+                        if (it.getAttribute('data-value') === currentVal) it.classList.add('selected');
+                    });
+                }
+            })();
+            </script>
+
+
+            <!-- STEP 2 — list the draft sessions for the selected plan -->
+            <t t-if="selected_plan">
+                <div class="card">
+                    <div class="card-head">
+                        <span style="font-size:1.2rem">📋</span>
+                        <h2>Étape 2 — Choisir le test à faire passer</h2>
+                    </div>
+
+                    <t t-if="not draft_sessions">
+                        <div class="empty-msg">
+                            <p>✅ Aucun test en attente pour ce plan.<br/>
+                               Tous les QCMs ont déjà été passés ou aucune session n'est planifiée.</p>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <form method="post" action="/qcm/kiosk/start">
+                            <input type="hidden" name="plan_id" t-att-value="selected_plan.id"/>
+                            <div class="form-row">
+                                <label for="session_id">Test à démarrer</label>
+                                <select name="session_id" id="session_id" class="form-select" required="required">
+                                    <option value="">-- Sélectionner un test --</option>
+                                    <t t-foreach="draft_sessions" t-as="s">
+                                        <option t-att-value="s.id">
+                                            <t t-esc="s.qcm_id.name"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                            <div class="btn-area">
+                                <button type="submit" class="btn-primary">▶ Démarrer le test</button>
+                            </div>
+                        </form>
+                    </t>
+                </div>
+            </t>
+
+        </t>
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         TEST PAGE  —  employee answers (auth=public, no Odoo chrome)
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template id="qcm_portal_test" name="QCM Test — Employé">
+        <t t-call="plan_integration.qcm_portal_layout">
+
+            <t t-if="error">
+                <div class="alert alert-warning">
+                    <span>⚠️</span>
+                    <div>
+                        <strong>Réponses manquantes.</strong>
+                        Veuillez répondre à toutes les questions avant de soumettre.
+                        <t t-if="error != 'submit'"> (<t t-esc="error"/> question(s) sans réponse)</t>
+                    </div>
+                </div>
+            </t>
+
+            <div class="alert alert-info">
+                <span>ℹ️</span>
+                <div>
+                    Sélectionnez <strong>une réponse</strong> pour chaque question,
+                    puis cliquez sur <strong>Soumettre</strong>.
+                </div>
+            </div>
+
+            <div class="progress">
+                <div class="progress-label">
+                    <span>Progression</span>
+                    <span><t t-esc="len(session.response_ids)"/> question(s)</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-fill" style="width:0%" id="qpf"></div>
+                </div>
+            </div>
+
+            <form method="post" t-attf-action="/qcm/take/#{session.token}/submit" id="qf">
+                <div class="card">
+                    <div class="card-head">
+                        <span style="font-size:1.2rem">📝</span>
+                        <h2 t-esc="session.qcm_id.name"/>
+                    </div>
+                    <t t-foreach="session.response_ids" t-as="resp">
+                        <div class="q-row">
+                            <div class="q-text">
+                                <span class="q-num" t-esc="resp_index + 1"/>
+                                <t t-esc="resp.question_text"/>
+                            </div>
+                            <div class="q-answers">
+                                <t t-foreach="resp.question_id.answer_ids" t-as="ans">
+                                    <label class="q-opt">
+                                        <input type="radio"
+                                               t-attf-name="answer_#{resp.id}"
+                                               t-att-value="ans.id"
+                                               class="qr"/>
+                                        <span t-esc="ans.answer_text"/>
+                                    </label>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+                <div class="btn-area">
+                    <button type="submit" class="btn-submit" id="qsb" disabled="disabled">
+                        ✔ Soumettre mes réponses
+                    </button>
+                </div>
+            </form>
+
+            <script>
+                (function(){
+                    var radios = document.querySelectorAll('.qr');
+                    var total  = document.querySelectorAll('.q-row').length;
+                    var fill   = document.getElementById('qpf');
+                    var btn    = document.getElementById('qsb');
+                    function upd(){
+                        var done = new Set();
+                        radios.forEach(function(r){ if(r.checked) done.add(r.name); });
+                        fill.style.width = (total ? Math.round(done.size/total*100) : 0)+'%';
+                        btn.disabled = done.size &lt; total;
+                    }
+                    radios.forEach(function(r){ r.addEventListener('change', upd); });
+                    upd();
+                    window.addEventListener('beforeunload', function(e){
+                        var done = new Set();
+                        radios.forEach(function(r){ if(r.checked) done.add(r.name); });
+                        if(done.size &gt; 0 &amp;&amp; done.size &lt; total){ e.preventDefault(); e.returnValue=''; }
+                    });
+                })();
+            </script>
+        </t>
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         DONE PAGE
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template id="qcm_portal_done" name="QCM Done">
+        <t t-call="plan_integration.qcm_portal_layout">
+            <div class="card">
+                <div class="done-card">
+                    <span class="done-icon">✅</span>
+                    <h2 style="color:#27ae60;">QCM terminé !</h2>
+                    <p>Votre questionnaire a bien été enregistré.<br/>
+                       <strong>Remettez la tablette au responsable.</strong></p>
+                    <a href="/qcm/kiosk" class="btn-new">+ Nouveau test</a>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         NOT FOUND
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template id="qcm_portal_not_found" name="QCM Not Found">
+        <t t-call="plan_integration.qcm_portal_layout">
+            <div class="card">
+                <div class="done-card">
+                    <span class="done-icon">🔗</span>
+                    <h2 style="color:#e74c3c;">Lien invalide</h2>
+                    <p>Ce lien QCM est incorrect ou expiré.<br/>Contactez votre responsable RH.</p>
+                    <a href="/qcm/kiosk" class="btn-new">Retour accueil</a>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

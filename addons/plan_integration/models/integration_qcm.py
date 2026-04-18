@@ -70,6 +70,7 @@ class IntegrationQcmAnswer(models.Model):
     """A possible answer choice for a QCM question."""
     _name = 'integration.qcm.answer'
     _description = 'Réponse QCM'
+    _rec_name = 'answer_text'
     _order = 'sequence, id'
 
     question_id = fields.Many2one(

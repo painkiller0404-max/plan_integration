@@ -1,3 +1,4 @@
+import secrets
 from odoo import models, fields, api
 from odoo.exceptions import UserError
 
@@ -66,6 +67,11 @@ class IntegrationQcmSession(models.Model):
 
     # ─────────────────────────────────────────────────────────────────────────
 
+    # ── Tablet token (kiosk access) ─────────────────────────────────────
+    token = fields.Char(
+        string='Token', readonly=True, copy=False, index=True,
+    )
+
     @api.depends('plan_id', 'qcm_id')
     def _compute_name(self):
         for rec in self:
@@ -98,6 +104,32 @@ class IntegrationQcmSession(models.Model):
 
     # ── Actions ───────────────────────────────────────────────────────────────
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('token'):
+                vals['token'] = secrets.token_urlsafe(32)
+        return super().create(vals_list)
+
+    def action_generate_token(self):
+        """(Re)generate the tablet access token — callable from HR form."""
+        for rec in self:
+            rec.token = secrets.token_urlsafe(32)
+
+    def _action_start_portal(self):
+        """Start the session from the public portal (no redirect returned)."""
+        if self.state != 'draft':
+            return
+        if not self.qcm_id.question_ids:
+            return   # silently skip — controller will show error page
+        for question in self.qcm_id.question_ids.sorted('sequence'):
+            self.env['integration.qcm.response'].create({
+                'session_id': self.id,
+                'question_id': question.id,
+            })
+        self.state = 'in_progress'
+        self.date_start = fields.Datetime.now()
+
     def action_start(self):
         """Start the QCM session: create blank response records for each question."""
         for rec in self:
@@ -115,14 +147,18 @@ class IntegrationQcmSession(models.Model):
                 })
             rec.state = 'in_progress'
             rec.date_start = fields.Datetime.now()
-        # Return the session form so the new hire can answer questions
+        # Return the clean operator test form (no scores, no menus)
+        operator_view = self.env.ref(
+            'plan_integration.view_integration_qcm_session_operator_form'
+        )
         return {
             'name': "Répondre au QCM",
             'type': 'ir.actions.act_window',
             'res_model': 'integration.qcm.session',
             'res_id': self.id,
             'view_mode': 'form',
-            'target': 'current',
+            'views': [(operator_view.id, 'form')],
+            'target': 'new',   # Opens as a popup — no Odoo menus visible
         }
 
     def action_submit(self):

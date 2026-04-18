@@ -2,6 +2,81 @@
 <odoo>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
+         integration.qcm.session  –  OPERATOR Test Form (clean, no scores)
+         Opens via action_start in target="new" (popup / fullscreen dialog)
+         The operator sees ONLY questions + answer choices. No points, no score.
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_integration_qcm_session_operator_form" model="ir.ui.view">
+        <field name="name">integration.qcm.session.operator.form</field>
+        <field name="model">integration.qcm.session</field>
+        <field name="priority">999</field>
+        <field name="arch" type="xml">
+            <form string="QCM — Questionnaire">
+                <header>
+                    <!-- Submit button: only when in_progress -->
+                    <button name="action_submit"
+                            string="✔  Soumettre mes réponses"
+                            type="object"
+                            class="btn-success"
+                            confirm="Êtes-vous sûr de vouloir soumettre ? Vous ne pourrez plus modifier vos réponses."
+                            invisible="state != 'in_progress'"/>
+                    <!-- Status: simplified -->
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,in_progress,done"/>
+                </header>
+                <sheet>
+                    <!-- Success/Fail banners shown ONLY after done -->
+                    <div class="alert alert-success text-center" role="alert"
+                         invisible="state != 'done' or not passed">
+                        <h3>✅ QCM réussi !</h3>
+                        <p>Votre résultat a été enregistré. Vous pouvez fermer cette fenêtre.</p>
+                    </div>
+                    <div class="alert alert-warning text-center" role="alert"
+                         invisible="state != 'done' or passed">
+                        <h3>📋 QCM terminé</h3>
+                        <p>Votre résultat a été enregistré. Vous pouvez fermer cette fenêtre.</p>
+                    </div>
+
+                    <!-- QCM title -->
+                    <div class="oe_title">
+                        <h1><field name="qcm_id" readonly="1"/></h1>
+                        <h5 class="text-muted">
+                            <field name="qcm_type" widget="badge" readonly="1"/>
+                        </h5>
+                    </div>
+
+                    <!-- Instructions (if any) -->
+                    <group invisible="state == 'done'">
+                        <div class="alert alert-info" role="alert">
+                            <strong>Instructions :</strong> Sélectionnez une réponse pour chaque question,
+                            puis cliquez sur "Soumettre mes réponses".
+                            Une fois soumis, vous ne pourrez plus modifier vos réponses.
+                        </div>
+                    </group>
+
+                    <!-- Questions — NO points, NO is_correct visible -->
+                    <notebook>
+                        <page string="Questions" name="questions">
+                            <field name="response_ids" nolabel="1"
+                                   readonly="state == 'done'">
+                                <list string="Questions" editable="bottom">
+                                    <field name="question_text" readonly="1"
+                                           string="Question"/>
+                                    <field name="selected_answer_id"
+                                           string="Votre réponse"
+                                           options="{'no_open': True, 'no_create': True}"
+                                           readonly="parent.state == 'done'"/>
+                                    <!-- is_correct and points_earned intentionally hidden -->
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
          integration.qcm.session  –  Form View (QCM taking – tablet friendly)
     ═══════════════════════════════════════════════════════════════════════ -->
     <record id="view_integration_qcm_session_form" model="ir.ui.view">
@@ -55,6 +130,8 @@
                         </group>
                     </group>
 
+
+
                     <!-- Score summary (only when done) -->
                     <group string="Résultats" invisible="state != 'done'">
                         <group>
@@ -67,7 +144,7 @@
                         </group>
                     </group>
 
-                    <!-- Questions & Answers -->
+                    <!-- Questions & Answers (HR view — scores visible ONLY after done) -->
                     <notebook>
                         <page string="Questions" name="questions">
                             <field name="response_ids" nolabel="1"
@@ -78,15 +155,17 @@
                                     <field name="question_text" readonly="1" string="Question"/>
                                     <field name="selected_answer_id"
                                            string="Votre réponse"
-                                           widget="many2one"
                                            options="{'no_open': True, 'no_create': True}"
                                            readonly="parent.state == 'done'"/>
+                                    <!-- Scores: only shown to HR after session is done -->
                                     <field name="is_correct" readonly="1"
                                            widget="boolean"
                                            string="✓"
+                                           invisible="parent.state != 'done'"
                                            optional="show"/>
                                     <field name="points_earned" readonly="1"
                                            string="Pts"
+                                           invisible="parent.state != 'done'"
                                            optional="show"/>
                                 </list>
                             </field>

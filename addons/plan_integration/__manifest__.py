@@ -22,6 +22,7 @@
         'security/security.xml',
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
+        'views/qcm_portal_templates.xml',
         'views/integration_qcm_views.xml',
         'views/integration_qcm_session_views.xml',
         'views/integration_plan_views.xml',

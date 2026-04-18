@@ -113,16 +113,6 @@
                                     <field name="date_end" optional="show"/>
                                     <field name="score"/>
                                     <field name="passed" widget="boolean"/>
-                                    <button name="action_start"
-                                            string="Démarrer"
-                                            type="object"
-                                            icon="fa-play"
-                                            invisible="state != 'draft'"/>
-                                    <button name="action_submit"
-                                            string="Soumettre"
-                                            type="object"
-                                            icon="fa-check"
-                                            invisible="state != 'in_progress'"/>
                                 </list>
                             </field>
                         </page>
