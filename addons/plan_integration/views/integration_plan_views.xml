@@ -24,7 +24,7 @@
                             invisible="state == 'nouveau'"/>
                     <!-- Statusbar (shared stages for both categories) -->
                     <field name="state" widget="statusbar"
-                           statusbar_visible="nouveau,culture_valeurs,formation_hse_theorique,modalite_rh,formation_hse_pratique,evaluation_hse,presentation,immersion"/>
+                           statusbar_visible="nouveau,culture_valeurs,formation_hse_theorique,modalite_rh,formation_hse_pratique,evaluation_rh,presentation,immersion"/>
                 </header>
                 <sheet>
                     <!-- Smart buttons -->
@@ -64,12 +64,12 @@
                         </group>
                     </group>
 
-                    <!-- HR Opinion: only shown at decision points -->
+                    <!-- HR Opinion: only shown at decision gates -->
                     <group string="Avis RH (décision de branche)"
-                           invisible="state not in ['culture_valeurs', 'evaluation_hse', 'evaluation_immersion']">
+                           invisible="state not in ['evaluation_rh', 'evaluation_hse', 'evaluation_immersion']">
                         <field name="hr_opinion" nolabel="1"
                                widget="radio"
-                               invisible="state not in ['culture_valeurs', 'evaluation_hse', 'evaluation_immersion']"/>
+                               invisible="state not in ['evaluation_rh', 'evaluation_hse', 'evaluation_immersion']"/>
                     </group>
 
                     <!-- Rapport d'intégration: only for executives at that stage -->

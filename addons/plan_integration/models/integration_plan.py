@@ -6,34 +6,37 @@ from odoo.exceptions import UserError
 STATE_SELECTION = [
     ('nouveau', 'Nouveau'),
     ('culture_valeurs', 'Culture et Valeurs'),
-    ('formation_hse_theorique', 'Formation Théorique HSE'),
-    ('modalite_rh', 'Modalité RH'),
+    ('formation_hse_theorique', 'Formation Theorique HSE'),
+    ('modalite_rh', 'Modalite RH'),
     ('formation_hse_pratique', 'Formation Pratique HSE'),
-    ('evaluation_hse', 'Évaluation HSE'),
-    ('presentation', 'Présentation Physique'),
+    ('evaluation_rh', 'Evaluations RH & HSE'),             # Operators: both QCMs at once
+    ('evaluation_hse', 'Evaluation HSE'),                   # Executives only
+    ('presentation', 'Presentation Physique'),
     ('immersion', 'Immersion'),
-    ('evaluation_immersion', 'Évaluation Immersion'),        # Operators only
-    ('rapport_integration', "Rapport d'Intégration"),        # Executives only
-    # ── Terminal states ──────────────────────────────────────────────────────
-    ('valide', 'Validé ✓'),
+    ('evaluation_immersion', 'Evaluation Immersion'),        # Operators only
+    ('rapport_integration', "Rapport d'Integration"),        # Executives only
+    # Terminal states
+    ('valide', 'Valide'),
     ('plan_formation', 'Plan de Formation'),
-    ('periode_essai_non_concluante', "Période d'Essai Non Concluante"),
+    ('periode_essai_non_concluante', "Periode d'Essai Non Concluante"),
     ('transfert_autre_poste', 'Transfert Vers un Autre Poste'),
 ]
 
 TERMINAL_STATES = {'valide', 'plan_formation', 'periode_essai_non_concluante', 'transfert_autre_poste'}
 
-# Maps plan stages that require a QCM to the corresponding qcm_type
-STAGE_QCM_MAP = {
-    'culture_valeurs':      'rh',
-    'evaluation_hse':       'hse',
-    'evaluation_immersion': 'immersion',
+# Maps plan stages that require QCM(s) to a tuple of qcm_type(s)
+# Operators: evaluation_rh creates BOTH rh and hse sessions at once
+# Executives: evaluation_hse creates only hse session
+STAGE_QCM_TYPES = {
+    'evaluation_rh':          ('rh', 'hse'),   # operators -- both created simultaneously
+    'evaluation_hse':         ('hse',),          # executives only
+    'evaluation_immersion':   ('immersion',),
 }
 
 # Ordered stages per category (decision gates handled separately)
 OPERATOR_FLOW = [
     'nouveau', 'culture_valeurs', 'formation_hse_theorique', 'modalite_rh',
-    'formation_hse_pratique', 'evaluation_hse', 'presentation',
+    'formation_hse_pratique', 'evaluation_rh', 'presentation',
     'immersion', 'evaluation_immersion',
 ]
 
@@ -44,7 +47,7 @@ EXECUTIVE_FLOW = [
 ]
 
 # Stages that trigger a decision gate before advancing
-OPERATOR_GATES = {'culture_valeurs', 'evaluation_hse', 'evaluation_immersion'}
+OPERATOR_GATES = {'evaluation_rh', 'evaluation_immersion'}
 EXECUTIVE_GATES = {'evaluation_hse'}
 
 
@@ -184,11 +187,12 @@ class IntegrationPlan(models.Model):
         result = super().write(vals)
         if 'state' in vals:
             new_state = vals['state']
-            qcm_type = STAGE_QCM_MAP.get(new_state)
-            if qcm_type:
+            qcm_types = STAGE_QCM_TYPES.get(new_state, ())
+            if qcm_types:
                 for rec in self:
                     if old_states.get(rec.id) != new_state:
-                        rec._auto_create_or_reset_qcm_session(qcm_type)
+                        for qcm_type in qcm_types:
+                            rec._auto_create_or_reset_qcm_session(qcm_type)
         return result
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -266,9 +270,10 @@ class IntegrationPlan(models.Model):
         is_operator = self.employee_category == 'operator'
 
         # ── Decision gates ────────────────────────────────────────────────────
-        if current == 'culture_valeurs' and is_operator:
-            return self._gate_culture_valeurs()
-        if current == 'evaluation_hse':
+        # -- Decision gates ---
+        if current == 'evaluation_rh' and is_operator:
+            return self._gate_evaluation_rh()
+        if current == 'evaluation_hse' and not is_operator:
             return self._gate_evaluation_hse()
         if current == 'evaluation_immersion' and is_operator:
             return self._gate_evaluation_immersion()
@@ -288,34 +293,63 @@ class IntegrationPlan(models.Model):
                 f"Impossible d'avancer depuis l'état « {dict(STATE_SELECTION).get(current, current)} »."
             )
 
-    def _gate_culture_valeurs(self):
+    def _gate_evaluation_rh(self):
         """
-        Gate after Culture & Valeurs (operators only).
-        Requires a completed RH QCM session with a score.
-        - score_rh >= 6  → Formation Théorique HSE
-        - score_rh <  6 + Avis HR positif  → Transfert vers un autre poste
-        - score_rh <  6 + Avis HR négatif  → Période d'essai non concluante
+        Combined gate after Évaluations RH & HSE (operators only).
+        Both QCM sessions (rh + hse) must be completed before advancing.
+
+        Routing:
+          - Both ≥ 6                → Présentation Physique
+          - RH < 6 only  + positif  → Redo RH courses (culture_valeurs),
+                                        reset RH QCM only (HSE score kept)
+          - HSE < 6 only + positif  → Redo HSE courses (formation_hse_theorique),
+                                        reset HSE QCM only (RH score kept)
+          - Both < 6     + positif  → Redo all courses (culture_valeurs),
+                                        reset both QCMs
+          - Any < 6      + négatif  → Période d'essai non concluante
         """
-        self._require_qcm_done('rh', "Culture & Valeurs")
-        if self.score_rh >= 6.0:
-            self.state = 'formation_hse_theorique'
+        self._require_qcm_done('rh',  "Évaluation RH")
+        self._require_qcm_done('hse', "Évaluation HSE")
+
+        rh_ok  = self.score_rh  >= 6.0
+        hse_ok = self.score_hse >= 6.0
+
+        if rh_ok and hse_ok:
+            self.state = 'presentation'
             self.hr_opinion = False
+            return
+
+        # Build informative failure message
+        fails = []
+        if not rh_ok:  fails.append(f"RH = {self.score_rh}/10")
+        if not hse_ok: fails.append(f"HSE = {self.score_hse}/10")
+        opinion = self._require_hr_opinion(
+            f"Score(s) insuffisant(s) : {', '.join(fails)} (seuil : 6/10). "
+            "Veuillez saisir l'avis RH avant de continuer."
+        )
+
+        if opinion == 'negative':
+            self.state = 'periode_essai_non_concluante'
         else:
-            opinion = self._require_hr_opinion(
-                f"Score RH = {self.score_rh}/10 (< 6). "
-                "Veuillez saisir l'avis RH avant de continuer."
-            )
-            if opinion == 'negative':
-                self.state = 'periode_essai_non_concluante'
+            # Positive opinion: retry only the subject(s) that failed
+            if not rh_ok:
+                # RH failed — redo from RH courses start; also reset HSE if it failed too
+                self.state = 'culture_valeurs'
+                self._auto_create_or_reset_qcm_session('rh')
+                if not hse_ok:
+                    self._auto_create_or_reset_qcm_session('hse')
             else:
-                self.state = 'transfert_autre_poste'
+                # Only HSE failed — redo HSE courses only, RH score is preserved
+                self.state = 'formation_hse_theorique'
+                self._auto_create_or_reset_qcm_session('hse')
+            self.hr_opinion = False
 
     def _gate_evaluation_hse(self):
         """
-        Gate after Évaluation HSE (both categories).
-        - score_hse >= 6  → Présentation Physique
-        - score_hse <  6 + Avis HR positif  → Plan de Formation
-        - score_hse <  6 + Avis HR négatif  → Période d'essai non concluante
+        Gate after Évaluation HSE (executives only).
+        - score_hse ≥ 6              → Présentation Physique
+        - score_hse < 6 + positif    → Plan de Formation
+        - score_hse < 6 + négatif    → Période d'essai non concluante
         """
         self._require_qcm_done('hse', "Évaluation HSE")
         if self.score_hse >= 6.0:
