@@ -232,17 +232,34 @@ class IntegrationPlan(models.Model):
     # QCM auto-management
     # ─────────────────────────────────────────────────────────────────────────
 
-    def _auto_create_or_reset_qcm_session(self, qcm_type):
+    def _auto_create_or_reset_qcm_session(self, qcm_type, force=False):
         """
         Ensure one draft session exists for the given qcm_type.
         - First time entering the stage  → create a fresh session.
         - Retry (existing session found) → reset it to draft, clear responses.
+
+        force=False (default, called from write() hook):
+            If a session with passed=True already exists, do nothing — the
+            employee already succeeded, no need to reset.
+        force=True (called explicitly from a gate on a failed QCM):
+            Always reset regardless of the current score.
         """
         qcm = self.env['integration.qcm'].search(
             [('qcm_type', '=', qcm_type)], limit=1
         )
         if not qcm:
             return  # No QCM configured for this type — skip silently
+
+        # If not forced, skip sessions that already have a passing score.
+        # This prevents resetting a passed HSE test when cycling back to
+        # evaluation_rh because only the RH QCM failed.
+        if not force:
+            passing = self.qcm_session_ids.filtered(
+                lambda s: s.qcm_type == qcm_type
+                and s.state == 'done' and s.passed
+            )
+            if passing:
+                return  # Already passed — leave it untouched
 
         existing = self.qcm_session_ids.filtered(
             lambda s: s.qcm_type == qcm_type
@@ -331,17 +348,18 @@ class IntegrationPlan(models.Model):
         if opinion == 'negative':
             self.state = 'periode_essai_non_concluante'
         else:
-            # Positive opinion: retry only the subject(s) that failed
+            # Positive opinion: force-reset only the subject(s) that failed
             if not rh_ok:
-                # RH failed — redo from RH courses start; also reset HSE if it failed too
+                # RH failed — redo from RH courses start
                 self.state = 'culture_valeurs'
-                self._auto_create_or_reset_qcm_session('rh')
+                self._auto_create_or_reset_qcm_session('rh', force=True)
                 if not hse_ok:
-                    self._auto_create_or_reset_qcm_session('hse')
+                    # Both failed — also reset HSE
+                    self._auto_create_or_reset_qcm_session('hse', force=True)
             else:
-                # Only HSE failed — redo HSE courses only, RH score is preserved
+                # Only HSE failed — redo HSE courses only, RH score preserved
                 self.state = 'formation_hse_theorique'
-                self._auto_create_or_reset_qcm_session('hse')
+                self._auto_create_or_reset_qcm_session('hse', force=True)
             self.hr_opinion = False
 
     def _gate_evaluation_hse(self):
