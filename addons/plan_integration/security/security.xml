@@ -1,22 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Group: Responsable RH (full access, manages all plans) -->
+        <!-- Section heading in Settings > Users > Access Rights -->
+        <record id="module_category_plan_integration" model="ir.module.category">
+            <field name="name">Plan d'Intégration</field>
+            <field name="sequence">100</field>
+        </record>
+
+        <!-- Privilege (Odoo 19): the selectable item in the user Access Rights tab -->
+        <record id="privilege_plan_integration" model="res.groups.privilege">
+            <field name="name">Plan d'Intégration</field>
+            <field name="category_id" ref="module_category_plan_integration"/>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- Group: Responsable RH — linked via privilege_id (Odoo 19) -->
         <record id="group_plan_integration_hr" model="res.groups">
-            <field name="name">Responsable RH / Plan d'Intégration</field>
-            <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
-        </record>
-
-        <!-- Group: Manager (evaluates immersion, views assigned plans) -->
-        <record id="group_plan_integration_manager" model="res.groups">
-            <field name="name">Manager / Plan d'Intégration</field>
-        </record>
-
-        <!-- Group: Nouveau Recru (takes QCMs, views own plan only) -->
-        <record id="group_plan_integration_new_hire" model="res.groups">
-            <field name="name">Nouveau Recru / Plan d'Intégration</field>
+            <field name="name">Responsable RH</field>
+            <field name="privilege_id" ref="privilege_plan_integration"/>
         </record>
     </data>
 </odoo>
-
 

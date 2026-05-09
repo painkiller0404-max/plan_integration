@@ -1,19 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_integration_plan_hr,integration.plan (RH),model_integration_plan,plan_integration.group_plan_integration_hr,1,1,1,1
-access_integration_qcm_hr,integration.qcm (RH),model_integration_qcm,plan_integration.group_plan_integration_hr,1,1,1,1
-access_integration_qcm_question_hr,integration.qcm.question (RH),model_integration_qcm_question,plan_integration.group_plan_integration_hr,1,1,1,1
-access_integration_qcm_answer_hr,integration.qcm.answer (RH),model_integration_qcm_answer,plan_integration.group_plan_integration_hr,1,1,1,1
+access_integration_qcm_hr,integration.qcm (RH),model_integration_qcm,plan_integration.group_plan_integration_hr,1,0,0,0
+access_integration_qcm_question_hr,integration.qcm.question (RH),model_integration_qcm_question,plan_integration.group_plan_integration_hr,1,0,0,0
+access_integration_qcm_answer_hr,integration.qcm.answer (RH),model_integration_qcm_answer,plan_integration.group_plan_integration_hr,1,0,0,0
 access_integration_qcm_session_hr,integration.qcm.session (RH),model_integration_qcm_session,plan_integration.group_plan_integration_hr,1,1,1,1
 access_integration_qcm_response_hr,integration.qcm.response (RH),model_integration_qcm_response,plan_integration.group_plan_integration_hr,1,1,1,1
-access_integration_plan_manager,integration.plan (Manager),model_integration_plan,plan_integration.group_plan_integration_manager,1,1,0,0
-access_integration_qcm_manager,integration.qcm (Manager),model_integration_qcm,plan_integration.group_plan_integration_manager,1,0,0,0
-access_integration_qcm_question_manager,integration.qcm.question (Manager),model_integration_qcm_question,plan_integration.group_plan_integration_manager,1,0,0,0
-access_integration_qcm_answer_manager,integration.qcm.answer (Manager),model_integration_qcm_answer,plan_integration.group_plan_integration_manager,1,0,0,0
-access_integration_qcm_session_manager,integration.qcm.session (Manager),model_integration_qcm_session,plan_integration.group_plan_integration_manager,1,1,1,0
-access_integration_qcm_response_manager,integration.qcm.response (Manager),model_integration_qcm_response,plan_integration.group_plan_integration_manager,1,1,1,0
-access_integration_plan_new_hire,integration.plan (Nouveau Recru),model_integration_plan,plan_integration.group_plan_integration_new_hire,1,0,0,0
-access_integration_qcm_new_hire,integration.qcm (Nouveau Recru),model_integration_qcm,plan_integration.group_plan_integration_new_hire,1,0,0,0
-access_integration_qcm_question_new_hire,integration.qcm.question (Nouveau Recru),model_integration_qcm_question,plan_integration.group_plan_integration_new_hire,1,0,0,0
-access_integration_qcm_answer_new_hire,integration.qcm.answer (Nouveau Recru),model_integration_qcm_answer,plan_integration.group_plan_integration_new_hire,1,0,0,0
-access_integration_qcm_session_new_hire,integration.qcm.session (Nouveau Recru),model_integration_qcm_session,plan_integration.group_plan_integration_new_hire,1,1,1,0
-access_integration_qcm_response_new_hire,integration.qcm.response (Nouveau Recru),model_integration_qcm_response,plan_integration.group_plan_integration_new_hire,1,1,1,0
